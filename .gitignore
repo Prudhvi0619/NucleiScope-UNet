@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Training data and generated outputs
+stage1_train/
+stage1_test/
+stage2_test_final/
+stage1_train.zip
+stage1_test.zip
+stage2_test_final.zip
+*.zip
+outputs/
+*.pt
+*.pth
+
+# Editors and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,17 @@
+{
+  "test_samples": 102,
+  "threshold": 0.5,
+  "test_loss": 0.2366021782451985,
+  "mean_dice": 0.8684189059252807,
+  "std_dice": 0.1746113771911891,
+  "mean_iou": 0.7966146746110587,
+  "std_iou": 0.19296026539782357,
+  "mean_precision": 0.8938965488121315,
+  "std_precision": 0.13902844708403,
+  "mean_recall": 0.8813242676205555,
+  "std_recall": 0.19399294460187094,
+  "mean_pixel_accuracy": 0.973475587134308,
+  "std_pixel_accuracy": 0.033291940933522265,
+  "pooled_dice": 0.8917906804155992,
+  "pooled_iou": 0.8047132113543759
+}

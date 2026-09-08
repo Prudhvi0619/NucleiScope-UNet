@@ -1,0 +1,13 @@
+{
+  "threshold": 0.5,
+  "minimum_component_size": 20,
+  "separation_method": "marker-controlled watershed",
+  "watershed_peak_min_distance": 5,
+  "watershed_peak_threshold_relative": 0.05,
+  "annotated_nucleus_count": 30,
+  "connected_component_count_before_watershed": 23,
+  "watershed_nucleus_count": 29,
+  "nucleus_density_percent": 24.18365478515625,
+  "mean_nucleus_area_model_pixels": 546.5172413793103,
+  "median_nucleus_area_model_pixels": 379.0
+}
