@@ -1,0 +1,23 @@
+# Dataset and generated artifacts
+data/
+stage1_train/
+outputs/
+smoke_outputs/
+
+# Model weights (publish separately with Git LFS or a release if desired)
+*.pt
+*.pth
+*.ckpt
+
+# Python environments and caches
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

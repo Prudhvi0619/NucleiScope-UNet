@@ -1,0 +1,149 @@
+{
+  "protocol": {
+    "model_selection": "Best checkpoint selected using validation Dice.",
+    "semantic_threshold": 0.5,
+    "watershed_calibration": "Post-processing parameters selected on validation images only.",
+    "final_evaluation": "Metrics reported once on untouched test images.",
+    "source_images_resized": false
+  },
+  "checkpoint": {
+    "path": "outputs/best_model.pt",
+    "epoch": 15,
+    "best_validation_dice": 0.9062971248460737
+  },
+  "dataset": {
+    "validation_samples_for_count_calibration": 67,
+    "test_samples": 67
+  },
+  "inference": {
+    "patch_size": 256,
+    "tile_overlap": 64,
+    "tile_batch_size": 4,
+    "elapsed_seconds": 60.34786868095398
+  },
+  "segmentation": {
+    "macro_per_image": {
+      "dice": {
+        "mean": 0.8698143340341594,
+        "standard_deviation": 0.1761462764267102,
+        "median": 0.9317029525797793,
+        "minimum": 0.03285600058152213,
+        "maximum": 0.9830866807610994
+      },
+      "iou": {
+        "mean": 0.7994848582251377,
+        "standard_deviation": 0.19597687990585672,
+        "median": 0.8721384701284198,
+        "minimum": 0.016702387111078264,
+        "maximum": 0.9667359667359667
+      },
+      "precision": {
+        "mean": 0.9052238273603714,
+        "standard_deviation": 0.12277461151909921,
+        "median": 0.9500257599175682,
+        "minimum": 0.38180921863445894,
+        "maximum": 1.0
+      },
+      "recall": {
+        "mean": 0.8731116318906227,
+        "standard_deviation": 0.18988197300853885,
+        "median": 0.9392767979383104,
+        "minimum": 0.016919967058471215,
+        "maximum": 0.9974554707379135
+      },
+      "specificity": {
+        "mean": 0.9859912708856475,
+        "standard_deviation": 0.03293197839441296,
+        "median": 0.9962196943941062,
+        "minimum": 0.8229013323395137,
+        "maximum": 1.0
+      },
+      "balanced_accuracy": {
+        "mean": 0.929551451388135,
+        "standard_deviation": 0.09482308404224153,
+        "median": 0.9630946242212257,
+        "minimum": 0.5083759433406378,
+        "maximum": 0.9981099747511961
+      },
+      "pixel_accuracy": {
+        "mean": 0.9743466347376973,
+        "standard_deviation": 0.03427984998801584,
+        "median": 0.9882568359375,
+        "minimum": 0.8560030864197531,
+        "maximum": 0.99951171875
+      },
+      "mcc": {
+        "mean": 0.8628873610894205,
+        "standard_deviation": 0.16460179086896973,
+        "median": 0.9233376417129769,
+        "minimum": 0.09620268765222975,
+        "maximum": 0.982839530004224
+      },
+      "binary_cross_entropy": {
+        "mean": 0.08322846368904495,
+        "standard_deviation": 0.1216490730441725,
+        "median": 0.03873339812397719,
+        "minimum": 0.001495762891347451,
+        "maximum": 0.6770382861322627
+      },
+      "foreground_area_error_percent": {
+        "mean": 17.070641043345017,
+        "standard_deviation": 28.445676148110962,
+        "median": 6.189914865749836,
+        "minimum": 0.21164021164021163,
+        "maximum": 137.66842413591095
+      }
+    },
+    "pooled_pixels": {
+      "true_positive": 916448,
+      "true_negative": 9059175,
+      "false_positive": 82360,
+      "false_negative": 147689,
+      "dice": 0.8884851510825543,
+      "iou": 0.7993461823275595,
+      "precision": 0.9175417097179839,
+      "recall": 0.8612124190776188,
+      "specificity": 0.9909905721522698,
+      "balanced_accuracy": 0.9261014956149443,
+      "pixel_accuracy": 0.977458711195108,
+      "mcc": 0.8765052450297696
+    }
+  },
+  "counting": {
+    "selected_parameters": {
+      "minimum_size": 5,
+      "minimum_distance": 8,
+      "threshold_relative": 0.05
+    },
+    "validation_watershed": {
+      "mae": 6.104477611940299,
+      "rmse": 14.199537516117973,
+      "median_absolute_error": 3.0,
+      "mean_signed_error": 0.582089552238806,
+      "mean_absolute_percentage_error": 159.95565706249795,
+      "within_one_count_fraction": 0.373134328358209,
+      "within_three_count_fraction": 0.582089552238806,
+      "pearson_correlation": 0.9255347827995829
+    },
+    "test_connected_components": {
+      "mae": 7.835820895522388,
+      "rmse": 15.112019531762067,
+      "median_absolute_error": 3.0,
+      "mean_signed_error": -5.477611940298507,
+      "mean_absolute_percentage_error": 25.660232668253645,
+      "within_one_count_fraction": 0.3880597014925373,
+      "within_three_count_fraction": 0.5373134328358209,
+      "pearson_correlation": 0.9431052941859553
+    },
+    "test_watershed": {
+      "mae": 6.119402985074627,
+      "rmse": 11.012882551337421,
+      "median_absolute_error": 3.0,
+      "mean_signed_error": 0.208955223880597,
+      "mean_absolute_percentage_error": 29.312513181081417,
+      "within_one_count_fraction": 0.40298507462686567,
+      "within_three_count_fraction": 0.582089552238806,
+      "pearson_correlation": 0.9674126039566378
+    }
+  }
+}

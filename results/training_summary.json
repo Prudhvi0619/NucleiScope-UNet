@@ -1,0 +1,8 @@
+{
+  "completed_epochs": 23,
+  "best_validation_dice": 0.9062971248460737,
+  "training_minutes_this_run": 7.035627460479736,
+  "source_images_resized": false,
+  "patch_size": 256,
+  "reserved_test_samples": 67
+}
