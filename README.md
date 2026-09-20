@@ -37,11 +37,13 @@ watershed count MAE `6.12` on 67 test images. It also had a substantial failure 
 
 ## Requirements
 
-Python **3.10 or newer is required**.
+Python **3.10 or newer is required**. The fully resolved CPU lock file and GitHub
+Actions workflow use **Python 3.12** so that every transitive version is reproducible.
 
 CPU installation:
 
 ```bash
+# Use Python 3.12 with the exact lock file.
 python -m venv .venv
 .venv/Scripts/activate
 pip install -r requirements-lock-cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu
