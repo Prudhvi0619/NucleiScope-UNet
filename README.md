@@ -1,158 +1,197 @@
 # NucleiScope-UNet
 
-Full-resolution microscopy nuclei segmentation and quantification using a
-patch-wise U-Net. The pipeline trains and predicts with pixel-preserving crops
-and overlapping tiles; source images and masks are never geometrically resized.
+Reproducible, native-resolution nuclei segmentation and quantification using a
+patch-wise U-Net, validation-calibrated post-processing, and object-level evaluation.
 
-## Highlights
+This is the repaired pipeline. It keeps source pixels at their original spatial scale,
+supports CPU smoke runs and CUDA training, and treats the dataset, split, checkpoint,
+calibration, and source revision as one verifiable experiment.
 
-- Trains on 670 annotated microscopy images with nine native image sizes.
-- Extracts nucleus-aware 256 x 256 patches without changing spatial scale.
-- Reconstructs full-resolution masks using overlapping tiled inference.
-- Separates touching nuclei with validation-calibrated watershed post-processing.
-- Reports semantic-segmentation and nucleus-counting metrics on an untouched
-  test split.
-- Produces masks, instance labels, overlays, probability maps, and JSON
-  quantification reports for unseen images.
+## What is improved
 
-## Results
+- Content hashes bind every checkpoint to the exact dataset and split.
+- Resume rejects changed hyperparameters, data, or splits before writing metadata.
+- Random, NumPy, PyTorch, and CUDA state is saved; deterministic execution is the default.
+- Masks are cached with annotation hashes and structural validation.
+- Nucleus-aware patches sample instances uniformly rather than favoring large nuclei.
+- 16-bit images preserve dynamic range; multipage TIFF stacks are rejected explicitly.
+- CPU execution is supported for tests and small runs.
+- Overlapping predictions use tapered blending to reduce tile-border artifacts.
+- Semantic threshold, connected-components cleanup, and watershed settings are calibrated
+  independently using validation data.
+- Evaluation includes semantic metrics, instance AP/F1, counting metrics, bootstrap
+  confidence intervals, and per-image calibration records.
+- Prediction refuses calibration from a different checkpoint.
+- Automated tests, linting, and GitHub Actions are included.
 
-The model was evaluated once on a held-out 67-image test set. Model selection
-and watershed calibration used validation data only.
+## Current evidence status
 
-| Metric | Test result |
-|---|---:|
-| Mean Dice | 0.870 |
-| Median Dice | 0.932 |
-| Pooled Dice | 0.888 |
-| Mean IoU | 0.799 |
-| Mean precision | 0.905 |
-| Mean recall | 0.873 |
-| Mean pixel accuracy | 97.43% |
-| Mean MCC | 0.863 |
-| Watershed count MAE | 6.12 nuclei |
-| Watershed median absolute error | 3 nuclei |
-| Count Pearson correlation | 0.967 |
+The repository does **not** contain the original dataset, trained weights, split manifest,
+or full history. Therefore the historical numbers in `results/` cannot independently prove
+which exact artifacts generated them. They remain a legacy baseline from the earlier
+pipeline and are not presented as results from this repaired implementation.
 
-Watershed separation improved count MAE from **7.84** using connected
-components alone to **6.12** nuclei.
+The earlier single-run baseline reported mean Dice `0.870`, pooled Dice `0.888`, and
+watershed count MAE `6.12` on 67 test images. It also had a substantial failure tail and
+29.31% count MAPE. Re-run this version before using those values in a resume or interview.
 
-![Training curves](assets/training_curves.png)
+## Requirements
 
-![Segmentation metrics](assets/segmentation_metrics.png)
+Python **3.10 or newer is required**.
 
-![Counting metrics](assets/counting_metrics.png)
+CPU installation:
 
-![Representative predictions](assets/representative_predictions.png)
+```bash
+python -m venv .venv
+.venv/Scripts/activate
+pip install -r requirements-lock-cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu
+```
 
-## Method
+For CUDA, install the PyTorch `2.4.1` build matching the machine first, then install the
+remaining pinned dependencies:
 
-1. Merge the instance annotations for each image into a binary semantic mask.
-2. Split complete images into deterministic 80/10/10 train, validation, and
-   test subsets before extracting patches.
-3. Sample pixel-preserving 256 x 256 training crops, with 75% of crops centred
-   near foreground pixels.
-4. Train a U-Net with BCE + soft Dice loss, AdamW, mixed precision, learning-rate
-   reduction, and early stopping.
-5. Run overlapping-tile inference with 64-pixel overlap and average predictions
-   back into the native image canvas.
-6. Select watershed parameters using validation images only and report final
-   segmentation and counting results on the untouched test set.
+```bash
+pip install torch==2.4.1 --index-url https://download.pytorch.org/whl/cu124
+pip install -r requirements.txt
+```
 
-The best checkpoint occurred at epoch 15 with validation Dice 0.9063. Training
-stopped at epoch 23 after eight epochs without improvement.
+The CUDA index is an example; use the index compatible with the installed driver.
+
+## Dataset
+
+Download the [2018 Data Science Bowl data](https://www.kaggle.com/competitions/data-science-bowl-2018)
+and retain its instance-mask layout:
+
+```text
+data/stage1_train/
+└── <sample_id>/
+    ├── images/<sample_id>.png
+    └── masks/<one lossless image per nucleus>
+```
+
+Each mask must be nonempty, contain exactly one connected nucleus, have the same dimensions
+as its image, and not overlap another instance mask. Lossy JPEG annotations are discouraged.
+
+## Train
+
+```bash
+python train.py \
+  --data-dir data/stage1_train \
+  --output-dir outputs/run-001 \
+  --epochs 30 \
+  --patch-size 256 \
+  --batch-size 4
+```
+
+The default split is approximately stratified by nucleus count, foreground fraction, and
+image area. It reserves complete images before patch sampling. `--split-seed` controls the
+split independently from `--seed`, which controls training.
+
+Resume by repeating all original training arguments and increasing `--epochs`:
+
+```bash
+python train.py \
+  --data-dir data/stage1_train \
+  --output-dir outputs/run-001 \
+  --epochs 40 \
+  --resume outputs/run-001/last_model.pt
+```
+
+Changed data or training settings are rejected. A new run also refuses a nonempty output
+directory, preventing stale checkpoint/configuration mixtures.
+
+## Evaluate and calibrate
+
+```bash
+python test.py \
+  --data-dir data/stage1_train \
+  --checkpoint outputs/run-001/best_model.pt \
+  --output-dir outputs/run-001-evaluation
+```
+
+The evaluator predicts validation images first, selects the semantic threshold and counting
+settings without test access, then evaluates the held-out test split once. It writes:
+
+- `calibration.json`, bound to the SHA-256 of the checkpoint;
+- semantic, instance, and counting metrics per image;
+- independent connected-component and watershed searches;
+- 95% bootstrap confidence intervals;
+- 32-bit instance-label TIFFs;
+- corrected overlays that tint only predicted foreground.
+
+Use `--threshold` only when the value was declared before test evaluation.
+
+## Predict
+
+Prediction requires either a verified calibration artifact or every setting explicitly:
+
+```bash
+python predict.py \
+  --image path/to/image.tiff \
+  --checkpoint outputs/run-001/best_model.pt \
+  --calibration outputs/run-001-evaluation/calibration.json
+```
+
+The calibration checkpoint hash must match. Output folders include the input file hash, so
+different images with the same filename cannot overwrite one another.
+
+Watershed settings are measured in pixels. If an image has a known linear pixel scale ratio
+relative to calibration, pass `--postprocess-scale-factor`. Prefer recalibration whenever
+the microscope, magnification, stain, or acquisition domain changes.
+
+## Repeated seeds
+
+Run three training seeds on one fixed split:
+
+```bash
+python run_multi_seed.py \
+  --data-dir data/stage1_train \
+  --output-dir outputs/multi-seed \
+  --seeds 41 42 43 \
+  --split-seed 42
+```
+
+This produces per-run and aggregate mean/standard-deviation results. A separate external
+dataset is still needed to establish cross-domain generalization.
+
+## Quality checks
+
+```bash
+pip install -r requirements-lock-cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu
+ruff check .
+pytest
+```
+
+CI runs these checks on every push and pull request.
 
 ## Repository structure
 
 ```text
-NucleiScope-UNet/
-|-- train.py                  # Patch-wise training and full-resolution validation
-|-- test.py                   # Held-out segmentation and counting evaluation
-|-- predict.py                # Prediction and quantification for one image
-|-- postprocess.py            # Component cleanup and watershed separation
-|-- requirements.txt
-|-- assets/                   # Selected result figures
-|-- results/                  # Compact JSON/CSV evaluation artifacts
-|-- .gitignore
-|-- LICENSE
-`-- README.md
+├── train.py                 # deterministic training and tiled inference
+├── test.py                  # calibration plus semantic/instance/count evaluation
+├── predict.py               # checkpoint-bound prediction and quantification
+├── postprocess.py           # cleanup and watershed separation
+├── nuclei_io.py             # validated I/O, hashing, and mask cache
+├── run_multi_seed.py        # repeated-seed benchmark runner
+├── tests/                   # unit and regression tests
+├── requirements-lock-cpu.txt # fully resolved reference environment
+├── results/                 # explicitly labelled legacy baseline artifacts
+├── MODEL_CARD.md
+├── REPRODUCIBILITY.md
+└── .github/workflows/quality.yml
 ```
 
-The dataset, mask cache, bulk prediction masks, and model checkpoints are
-excluded from version control.
+## Scope and limitations
 
-## Dataset layout
+- This is a 2-D semantic model followed by heuristic instance separation, not a learned
+  instance-segmentation architecture.
+- TIFF stacks must be converted into an explicit slice or projection.
+- Performance is not established outside the heterogeneous Data Science Bowl data.
+- Pixel measurements are not physical measurements without microscope calibration.
+- The trained checkpoint is not included; publish a verified release artifact before
+  presenting the repository as immediately usable for inference.
 
-Download the [2018 Data Science Bowl dataset](https://www.kaggle.com/competitions/data-science-bowl-2018)
-and keep the original `stage1_train` structure:
-
-```text
-data/stage1_train/
-`-- <sample_id>/
-    |-- images/<sample_id>.png
-    `-- masks/<one PNG per nucleus>
-```
-
-## Installation
-
-Python 3.10 or newer is recommended. Install a CUDA-enabled PyTorch build that
-matches the system first, then install the remaining packages:
-
-```bash
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
-pip install -r requirements.txt
-```
-
-Use the correct PyTorch CUDA index for the installed driver if it differs from
-the example above.
-
-## Training
-
-```bash
-python train.py --data-dir "data/stage1_train" --output-dir outputs --epochs 30 --patch-size 256 --batch-size 4 --patches-per-image 2
-```
-
-For a 6 GB GPU, reduce `--batch-size` to 2 if an out-of-memory error occurs.
-Resume an interrupted run with:
-
-```bash
-python train.py --data-dir "data/stage1_train" --output-dir outputs --epochs 30 --resume "outputs/last_model.pt"
-```
-
-## Testing
-
-```bash
-python test.py --data-dir "data/stage1_train" --checkpoint "outputs/best_model.pt" --output-dir "outputs/test"
-```
-
-The evaluator saves per-image CSV files, a machine-readable summary, semantic
-masks, watershed instance masks, and metric visualizations.
-
-## Prediction
-
-After testing has produced the calibrated post-processing settings:
-
-```bash
-python predict.py --image "path/to/microscopy_image.png" --checkpoint "outputs/best_model.pt"
-```
-
-Prediction outputs include the raw and cleaned semantic masks, a 16-bit
-probability map, watershed instance labels, coloured instances, an overlay, a
-summary figure, and `quantification.json`.
-
-![Prediction example](assets/prediction_example.png)
-
-## Limitations
-
-- One brightfield-style test image was a strong domain outlier (Dice 0.033),
-  while the median test Dice was 0.932. Performance depends on the microscopy
-  appearance represented during training.
-- Watershed improves touching-nucleus separation but remains a heuristic, not
-  a learned instance-segmentation model.
-- Areas and equivalent diameters are reported in pixels. Physical units require
-  microscope pixel-size calibration.
-- Nuclei per megapixel is image-space density and must not be interpreted as a
-  physical density measurement.
+See [MODEL_CARD.md](MODEL_CARD.md) and [REPRODUCIBILITY.md](REPRODUCIBILITY.md) before reuse.
 
 ## License
 

@@ -3,5 +3,8 @@
 *.md text eol=lf
 *.json text eol=lf
 *.csv text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
 *.png binary
+*.tif binary
 *.tiff binary

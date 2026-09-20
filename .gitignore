@@ -3,6 +3,7 @@ data/
 stage1_train/
 outputs/
 smoke_outputs/
+smoke_data/
 
 # Model weights (publish separately with Git LFS or a release if desired)
 *.pt
@@ -12,6 +13,11 @@ smoke_outputs/
 # Python environments and caches
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.ruff_cache/
+.matplotlib-cache/
+.matplotlib/
+.coverage
 .venv/
 venv/
 env/
@@ -21,3 +27,4 @@ env/
 .vscode/
 .DS_Store
 Thumbs.db
+*.tmp

@@ -11,6 +11,8 @@ from skimage.segmentation import watershed
 
 def remove_small_components(binary_mask: np.ndarray, minimum_size: int) -> np.ndarray:
     """Remove foreground components smaller than ``minimum_size`` pixels."""
+    if minimum_size < 1:
+        raise ValueError("minimum_size must be positive")
     binary_mask = np.asarray(binary_mask, dtype=bool)
     if minimum_size <= 1:
         return binary_mask
@@ -27,34 +29,36 @@ def separate_touching_nuclei(
     threshold_relative: float,
 ) -> np.ndarray:
     """Split touching foreground regions using marker-controlled watershed."""
+    if minimum_distance < 1:
+        raise ValueError("minimum_distance must be positive")
+    if not 0 <= threshold_relative <= 1:
+        raise ValueError("threshold_relative must be between 0 and 1")
     binary_mask = np.asarray(binary_mask, dtype=bool)
     components = label(binary_mask)
     if components.max() == 0:
         return components.astype(np.int32)
 
     distance = ndi.distance_transform_edt(binary_mask)
-    coordinates = peak_local_max(
-        distance,
-        min_distance=minimum_distance,
-        threshold_rel=threshold_relative,
-        labels=binary_mask,
-        exclude_border=False,
-    )
     markers = np.zeros(binary_mask.shape, dtype=np.int32)
-    for marker_id, (row, column) in enumerate(coordinates, start=1):
-        markers[row, column] = marker_id
-
-    # Every disconnected foreground region must contain at least one marker.
-    next_marker = int(markers.max()) + 1
+    next_marker = 1
+    # Search per component so a large object cannot suppress peaks in smaller ones
+    # through peak_local_max's image-global relative threshold.
     for component_id in range(1, int(components.max()) + 1):
         component = components == component_id
-        if np.any(markers[component] > 0):
-            continue
-        component_distance = np.where(component, distance, -1.0)
-        row, column = np.unravel_index(
-            np.argmax(component_distance), component_distance.shape
+        coordinates = peak_local_max(
+            distance,
+            min_distance=minimum_distance,
+            threshold_rel=threshold_relative,
+            labels=component,
+            exclude_border=False,
         )
-        markers[row, column] = next_marker
-        next_marker += 1
+        if len(coordinates) == 0:
+            component_distance = np.where(component, distance, -1.0)
+            coordinates = np.asarray(
+                [np.unravel_index(np.argmax(component_distance), component_distance.shape)]
+            )
+        for row, column in coordinates:
+            markers[int(row), int(column)] = next_marker
+            next_marker += 1
 
     return watershed(-distance, markers, mask=binary_mask).astype(np.int32)
