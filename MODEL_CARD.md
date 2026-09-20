@@ -27,13 +27,13 @@ hashes and rejects mismatched data at evaluation time.
 
 ## Evaluation
 
-The repaired evaluator reports semantic overlap/classification metrics, object matching at
+The evaluator reports semantic overlap/classification metrics, object matching at
 IoU 0.50, mean instance AP across IoU 0.50–0.95, count error, per-image records, and bootstrap
 confidence intervals. Model selection uses validation macro Dice. Semantic and post-processing
 settings are selected on validation data only.
 
-The CSV/JSON files currently committed under `results/` came from the legacy implementation.
-They do not contain enough provenance to qualify as verified repaired-pipeline results.
+The CSV/JSON files currently committed under `results/` came from the reference experiment.
+They do not contain enough provenance to qualify as verified current-pipeline results.
 
 ## Known risks
 

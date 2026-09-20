@@ -235,6 +235,7 @@ NucleiScope-UNet/
 ├── tests/                     # unit and regression tests
 ├── assets/                    # README figures
 ├── results/                   # compact reference benchmark artifacts
+├── ENGINEERING_NOTES.md       # design and reliability decisions
 ├── MODEL_CARD.md              # intended use and limitations
 ├── REPRODUCIBILITY.md         # experiment reproducibility contract
 └── .github/workflows/quality.yml

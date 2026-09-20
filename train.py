@@ -209,7 +209,7 @@ def load_checkpoint(path: Path, device: torch.device) -> dict:
         ) from error
     if checkpoint.get("schema_version") != CHECKPOINT_SCHEMA_VERSION:
         raise ValueError(
-            "Legacy or incompatible checkpoint. Retrain with this repaired pipeline; "
+            "Version-1 or incompatible checkpoint. Retrain with the current pipeline; "
             "unsafe pickle fallback is intentionally disabled."
         )
     return checkpoint

@@ -28,5 +28,5 @@ For a defensible report:
 4. Keep the held-out test split untouched until all choices are finalized.
 5. Evaluate an external microscopy dataset before claiming domain generalization.
 
-Legacy checkpoints are intentionally not loaded through unsafe pickle fallback. Retrain them
-with this pipeline instead.
+Version-1 or incompatible checkpoints are intentionally not loaded through unsafe pickle
+fallback. Retrain them with the current pipeline instead.
