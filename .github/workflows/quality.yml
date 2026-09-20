@@ -15,5 +15,5 @@ jobs:
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements-lock-cpu.txt --extra-index-url https://download.pytorch.org/whl/cpu
-      - run: ruff check .
-      - run: pytest
+      - run: python -m ruff check .
+      - run: python -m pytest
